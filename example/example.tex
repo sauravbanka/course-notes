@@ -1,0 +1,152 @@
+\documentclass[11pt]{article}
+\usepackage[margin,header,sans,titlepage,bib]{../lecture_notes}
+
+\title{Testing LaTeX sty file}
+\author{Saurav Banka}
+\semester{HS 2025}
+\lecturer{ChatGPT}
+\date{\today}
+\addbibresource{example.bib}
+
+\begin{document}
+\maketitle
+\section{Testing Colored Boxes}
+\subsection{What are those}
+
+\begin{theorem}\label{thm:oddsquares}
+Every odd number is the difference of two squares.
+\end{theorem}
+
+\begin{lemma}\label{lem:div}
+If $p$ divides $ab$, then $p$ divides $a$ or $b$.
+\end{lemma}
+
+\begin{definition}\label{def:prime}
+A prime is a number with no nontrivial divisors.
+\end{definition}
+
+\begin{example}\label{ex:prime7}
+The number $7$ is prime.
+\end{example}
+
+\begin{exercise}\label{ex:infprimes}
+Prove that there are infinitely many primes.
+\end{exercise}
+
+\subsection{What are these}
+\begin{note}\label{note:equiv}
+This is equivalent to showing that primes cannot be bounded above.
+\end{note}
+
+
+\begin{theorem}\label{thm:murphys}
+If something is suspicious...
+\begin{proof}
+Let $n$ be odd. Then $n = 2k+1$.  
+Observe that
+\[
+( k+1 )^2 - ( k )^2 = (k^2 + 2k + 1) - k^2 = 2k+1 = n.
+\]
+Thus every odd number is a difference of two squares.
+\end{proof}
+\end{theorem}
+
+
+\begin{proposition}[Bayes Rule]
+$\Pr(A \mid B) = \dfrac{\Pr(B \mid A) \Pr(A)}{\Pr(B)}$.
+\end{proposition}
+
+\begin{corollary}
+Every prime $p$ is either $2$ or odd.....
+\end{corollary}
+
+\section{Math Shorthands}
+Some math macros and operators:
+
+\subsection{Probability}
+\[
+X \sim \Bin(n,p), \quad Y \sim \Ber(\theta), \quad Z \sim \Nor(0,1).
+\]
+\[
+\theta \sim \BetaDist(\alpha,\beta), \quad 
+\lambda \sim \GammaDist(k,\theta), \quad 
+N \sim \DistDelta(\mu).
+\]
+\[
+\EE[X], \quad \Var(X), \quad \Cov(X,Y), \quad \Pr(A \cap B).
+\]
+
+\subsection{Optimization}
+\[
+\argmin_{x \in \RR^n} f(x), 
+\qquad 
+\argmax_{\theta \in \Theta} \Pr(D \mid \theta).
+\]
+\[
+\sup_{x \in \RR} g(x), 
+\qquad 
+\inf_{n \geq 1} a_n.
+\]
+
+\subsection{Linear Algebra}
+\[
+A \vv = \lambda \vv, 
+\quad \rank(A), 
+\quad \tr(A), 
+\quad \Null(A).
+\]
+
+\section{Warnings and Drafts}
+\begin{danger}
+This section might contain misleading or incomplete arguments.
+\end{danger}
+
+\begin{ddanger}
+Do not attempt this at home: Probability measure $\PP$ over an uncountable set
+can behave counterintuitively.
+\end{ddanger}
+
+\DRAFT % shows draft notice in footer + date
+
+\section{Algorithms}
+\begin{algorithm}
+\caption{Sample Pseudocode}
+\begin{algorithmic}[1]
+\State Initialize $x \gets 0$
+\While{$x < 10$}
+  \State $x \gets x+1$
+\EndWhile
+\State \Return $x$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Cross References}
+We can reference earlier results:
+\begin{itemize}[itemsep=2pt, topsep=2pt]
+  \item See \autoref{thm:oddsquares}.
+  \item See \autoref{lem:div}.
+  \item See \autoref{def:prime}.
+  \item See \autoref{ex:prime7}.
+  \item See \autoref{ex:infprimes}.
+\end{itemize}
+
+
+\section{Draft notes and side notes}
+This is a sentence. \draftnote{Check this step later.} \\
+This needs a picture \sidenote{Draw diagram here}.
+
+\newpage
+\appendix
+\section{Background on Measure Theory}
+Appendix material here.
+
+\section{Background on Information Theory}
+No information....
+
+\section{Bibliography Example}
+We can cite classic references: see \cite{rudin1987real,cover2006elements}.
+
+\newpage
+\printbibliography
+
+\end{document}

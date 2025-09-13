@@ -1,0 +1,232 @@
+% notes.sty
+\ProvidesPackage{lecture_notes}[2025/09/13 Lecture Notes Style]
+
+%%%%%%%% PACKAGES %%%%%%%%
+\RequirePackage{amsmath,amssymb,amsthm,mathtools}
+\RequirePackage{bm,bbm}
+\RequirePackage[usenames,dvipsnames,svgnames]{xcolor}
+\RequirePackage[framemethod=TikZ]{mdframed}
+\RequirePackage{thmtools}
+\RequirePackage{tikz}
+\usetikzlibrary{automata,positioning,arrows,calc}
+\RequirePackage{algorithm}
+\RequirePackage[noend]{algpseudocode}
+\RequirePackage{hyperref}
+\RequirePackage[shortlabels]{enumitem}
+\RequirePackage{caption}
+\RequirePackage{sectsty}
+
+%%%%%%%%% If/Else Toggles %%%%%%%%%
+\newif\ifnotesheader\notesheaderfalse      % default: no header
+\newif\ifnotesmargin\notesmarginfalse      % default: no margin override
+\newif\ifnotessans\notessansfalse          % default: serif font
+\newif\ifnotestitlepage\notestitlepagefalse% default: no custom title page
+\newif\ifnotesbib\notesbibfalse            % default: no bibliography
+
+%%%%%%%  Receive Options %%%%%%%%
+\DeclareOption{header}{\notesheadertrue}
+\DeclareOption{noheader}{\notesheaderfalse}
+\DeclareOption{margin}{\notesmargintrue}
+\DeclareOption{nomargin}{\notesmarginfalse}
+\DeclareOption{sans}{\notessanstrue}
+\DeclareOption{serif}{\notessansfalse}
+\DeclareOption{titlepage}{\notestitlepagetrue}
+\DeclareOption{notitlepage}{\notestitlepagefalse}
+\DeclareOption{bib}{\notesbibtrue}
+\DeclareOption{nobib}{\notesbibfalse}
+\ProcessOptions
+
+%%%%%%%% Conditional Imports %%%%%%%%
+\ifnotesbib
+  \RequirePackage{biblatex}
+\fi
+
+%%%%%%%% Font %%%%%%%%
+\ifnotessans
+  \renewcommand{\familydefault}{\sfdefault}
+\fi
+
+%%%%%%%% METADATA %%%%%%%%
+% Reuse built-in fields: \title, \author, \date
+% Add our own: \lecturer, \semester
+
+\def\@lecturer{}
+\def\@semester{}
+\newcommand{\lecturer}[1]{\def\@lecturer{#1}}
+\newcommand{\semester}[1]{\def\@semester{#1}}
+
+%%%%%%%% Page Setup %%%%%%%%
+\ifnotesmargin
+  \RequirePackage{geometry}
+  \geometry{left=1in,right=1in,top=1in,bottom=1in}
+\fi
+
+\ifnotesheader
+  \RequirePackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \fancyhead[L]{\small\@title}
+  \fancyhead[R]{\small\@author}
+  \cfoot{\thepage}
+\fi
+
+\setlist{nosep}
+\allsectionsfont{\sffamily\bfseries}
+
+%%%%%%%% TITLE PAGE AND TABLE OF CONTENTS %%%%%%%%
+\ifnotestitlepage
+  \renewcommand{\maketitle}{%
+    \thispagestyle{empty} % no headers/footers
+    \begin{center}
+      \vspace*{2cm}
+      {\LARGE\bfseries \@title \par}   % course name/number
+      \vspace{1cm}
+      {\large Lecturer(s): \@lecturer \par}
+      \vspace{0.5cm}
+      {\large Author: \@author \par}
+      \vspace{0.5cm}
+      {\large Semester: \@semester \par}
+  	\vspace{0.5cm}
+      {\small \textit{Last edited:} \@date}
+      \vfill
+      \rule{\textwidth}{0.4pt}\par
+      \smallskip
+      {\small These notes have been prepared by a student and may contain errors or omissions. They are provided for study purposes only and should not be considered an official record of the course.}    
+    \end{center}
+    \newpage
+    \thispagestyle{empty}
+    \tableofcontents
+    \newpage
+  }
+\fi
+
+%%%%%%%% ROOT THEOREM USING MACRO %%%%%%%%
+\newcommand{\newscribebox}[3]{%
+  \mdfdefinestyle{#1box}{%
+    linewidth=3pt,
+    linecolor=#3,
+    topline=false, bottomline=false, rightline=false, % only left stripe
+    backgroundcolor=#3!10,
+    skipabove=10pt, skipbelow=10pt,
+    innertopmargin=8pt, innerbottommargin=8pt,
+    innerleftmargin=10pt, innerrightmargin=10pt
+  }
+  \declaretheoremstyle[
+    headfont=\bfseries\sffamily\color{black},
+    bodyfont=\normalfont,
+    mdframed={style=#1box},
+    headpunct={.},
+    postheadspace={0.5em}
+  ]{#1style}
+  \declaretheorem[style=#1style,numberwithin=section,name=#2]{#1}
+}
+
+%%%%%%%% ENVIRONMENTS %%%%%%%%
+\newscribebox{theorem}{Theorem}{Blue}
+\newscribebox{lemma}{Lemma}{Teal}
+\newscribebox{proposition}{Proposition}{Brown}
+\newscribebox{corollary}{Corollary}{OliveGreen}
+\newscribebox{definition}{Definition}{ForestGreen}
+\newscribebox{example}{Example}{Orange}
+\newscribebox{exercise}{Exercise}{BrickRed}
+\newscribebox{note}{Note}{Purple}
+
+%%%%%%%% PROOF ENVIRONMENTS %%%%%%%%
+\newenvironment{proofsketch}{\begin{proof}[Proof Sketch]}{\end{proof}}
+
+%%%%%%%% LISTS %%%%%%%%
+\setlist{nosep} % compact itemize/enumerate by default
+
+%%%%%%%% MATH SHORTCUTS %%%%%%%%
+% Sets
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\EE}{\mathbb{E}}
+
+% Probability distributions
+\newcommand{\Ber}{\operatorname{Ber}}
+\newcommand{\Bin}{\operatorname{Bin}}
+\newcommand{\Geo}{\operatorname{Geo}}
+\newcommand{\Pois}{\operatorname{Poisson}}
+\newcommand{\Nor}{\mathcal{N}}
+\newcommand{\BetaDist}{\operatorname{Beta}}
+\newcommand{\GammaDist}{\operatorname{Gamma}}
+\newcommand{\Dir}{\operatorname{Dir}}        % Dirichlet
+\newcommand{\DistDelta}{\operatorname{Delta}} % Point mass
+\newcommand{\Unif}{\operatorname{Unif}}      % Uniform
+\newcommand{\Exp}{\operatorname{Exp}}        % Exponential
+\newcommand{\ChiSq}{\chi^2}                  % Chi-square
+\newcommand{\Lap}{\operatorname{Lap}}        % Laplace
+\newcommand{\StudentT}{t}                    % Student's t
+\newcommand{\Cauchy}{\operatorname{Cauchy}}
+\newcommand{\Wishart}{\operatorname{Wishart}}
+
+% Moments & operators
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Corr}{\operatorname{Corr}}
+
+% Optimization operators
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\maximize}{\operatorname*{maximize}}
+\newcommand{\minimize}{\operatorname*{minimize}}
+\newcommand{\supremum}{\operatorname*{sup}}
+\newcommand{\infimum}{\operatorname*{inf}}
+\newcommand{\limsupm}{\operatorname*{lim\,sup}}
+\newcommand{\liminfm}{\operatorname*{lim\,inf}}
+
+% Vectors and matrices
+\newcommand{\vx}{\bm{x}}
+\newcommand{\vy}{\bm{y}}
+\newcommand{\vv}{\bm{v}}
+\newcommand{\mA}{\bm{A}}
+\newcommand{\mI}{\mathbf{I}}
+
+% More linear algebra
+% Linear algebra operators
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Null}{Null}
+
+% Norms and abs
+\newcommand{\abs}[1]{\lvert #1 \rvert}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\ceil}[1]{\lceil #1 \rceil}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newcommand{\indicator}[1]{\mathbbm{1}\{#1\}}
+
+%%%%%%%% DANGER/WARNING ENVIRONMENTS %%%%%%%%
+\font\manual=manfnt
+\def\dbend{{\manual\char127}} % dangerous bend symbol
+\newenvironment{danger}{\begin{trivlist}\item[]\noindent%
+\begingroup\hangindent=2pc\hangafter=-2%
+\hbox to0pt{\hskip-\hangindent\dbend\hfill}\ignorespaces}{\endgroup\end{trivlist}}
+\newenvironment{ddanger}{\begin{trivlist}\item[]\noindent%
+\begingroup\hangindent=3.5pc\hangafter=-2%
+\hbox to0pt{\hskip-\hangindent\dbend\kern2pt\dbend\hfill}\ignorespaces}{\endgroup\end{trivlist}}
+
+%%%%%%%% DRAFTING / NOTES %%%%%%%%
+\newcommand{\draftnote}[1]{\textcolor{red}{\textsf{<<#1>>}}}
+\newcommand{\sidenote}[1]{\marginpar{\tiny\textsf{#1}}}
+\newcommand{\DRAFT}{%
+  \begin{center}
+    \fbox{\textsf{\textbf{DRAFT --- \today}}}
+  \end{center}
+}
+
+%%%%%%%% HYPERREF FIXES %%%%%%%%
+\makeatletter
+\def\theoremautorefname{Theorem}
+\def\lemmaautorefname{Lemma}
+\def\propositionautorefname{Proposition}
+\def\corollaryautorefname{Corollary}
+\def\definitionautorefname{Definition}
+\def\exampleautorefname{Example}
+\def\exerciseautorefname{Exercise}
+\def\noteautorefname{Note}
+\makeatother
