@@ -6,5 +6,7 @@ My sty file contains basic commands for generating theorems, table of contents, 
 latexmk -pdf -pvc -interaction=nonstopmode -synctex=1 example.tex
 ```
 
+See example.tex and example.pdf as a living document of all functionality supported by my sty file.
+
 ### References
 Heavily inspired by Jeff Erikson's LaTeX sty files for scribing (https://jeffe.cs.illinois.edu/pubs/latex.html) and Tyler Zhu and Evan Chen's LaTeX notes. 
