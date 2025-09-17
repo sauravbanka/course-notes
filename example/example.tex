@@ -75,6 +75,14 @@ N \sim \DistDelta(\mu).
 \[
 \EE[X], \quad \Var(X), \quad \Cov(X,Y), \quad \Pr(A \cap B).
 \]
+Conditional expectation: $\Econd{X}{Y}$ \\
+Conditional probability: $\Pcond{A}{B}$ \\
+Density notation: $\p{x}, \q{z}$
+
+\subsubsection{Gaussian Processes}
+Define prior: $f \sim \GP{0}{k(x,x')}$ \\
+Posterior mean: $\mu'(x^*) = \kxx{x^*}{X} \big(\Kmat + \sigma^2 I\big)\inv y$
+
 
 \subsection{Optimization}
 \[
@@ -95,6 +103,11 @@ A \vv = \lambda \vv,
 \quad \tr(A), 
 \quad \Null(A).
 \]
+Transpose: $A\T$ \\
+Inverse: $A\inv$ \\
+Half fraction: $\half x^2$ \\
+Diagonal matrix: $\diag(\vx)$
+
 
 \section{Warnings and Drafts}
 \begin{danger}

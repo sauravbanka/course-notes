@@ -1,0 +1,142 @@
+\documentclass[11pt]{article}
+\usepackage[margin,header,sans,titlepage,bib]{../lecture_notes}
+
+
+\title{Reliable and Trustworthy AI}
+\author{Saurav Banka}
+\semester{HS 2025}
+\lecturer{Dr. Martin Vechev}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Lecture 1: Introduction (17.09.25)}
+\subsection{Motivation} % (fold)
+\label{sub:motivation}
+Traditional ML progress focused on \textbf{standard accuracy} (e.g., ImageNet).  
+Deployments in real-world settings often reveal failures:
+\begin{itemize}
+    \item Distribution shifts $\rightarrow$ performance drop.
+    \item Safety-critical failures (autonomous driving, incorrect medical diagnoses).
+\end{itemize} 
+
+When deploying models into the real world, we need to know that models are safe, secure, robust, transparent and reliable. The goal of this course is to get a fundamental understanding of privacy and robustness techniques, and a glimpse into the latest research into reliable and trustworthy AI.
+% subsection motivation (end)
+
+\subsection{Vertical I: Robustness}
+\label{sub:robustness_intro}
+Robustness research broadly tackles questions:
+\begin{itemize}
+	\item What attacks (e.g.\ gradient-based, branch-and-bound) and defenses exist?
+	\item Is it possible to certify / prove robustness and performance under perturbations or adversaries?
+	\item How to train models that are provably robust?
+\end{itemize}
+
+\subsubsection{Why is certifying robustness difficult?}
+Consider the use-case of image classification (e.g.\ MRI images) under input perturbations (noise, blur, rotation) in a range that does not affect human ground-truth labels.  
+The decision boundary of a neural network is a $(d-1)$-dimensional hypersurface in the input space $\RR^d$.  
+The goal is that the model prediction should remain invariant to such perturbations.
+
+Certifying robustness involves:
+\begin{enumerate}
+	\item \textbf{Precondition $\varphi(x)$:} convex polytope of all possible perturbations of $x$.  
+	      \emph{Problem:} prohibitively large to enumerate, especially in higher dimensions or under multiple transformations.
+	\item \textbf{Propagation:} push this region through the network layers.  
+	      \emph{Problem:} results in many small non-convex shapes. Exact methods (MILP, SMT) are NP-complete and do not scale.
+	\item \textbf{Abstraction:} use convex relaxations to approximate the shapes with an enclosing convex polytope.  
+	      If the final convex region (post-condition) lies entirely in the correct class, the model is robust.  
+	      \emph{Problem:} loose relaxations introduce false positives and reduce provability.
+\end{enumerate}
+
+\textbf{Summary:} Tight approximations are precise but expensive; loose approximations are efficient but may miss guarantees.
+
+\subsubsection{Training Certified Models}
+Even if robustness could be proven efficiently, unless a network is trained to be provable, it is unlikely to satisfy such specifications.
+
+\textbf{Key idea:} Instead of propagating individual datapoints, propagate convex regions (symbolic inputs).  
+Backpropagation then uses symbolic information to reduce the size of post-conditions, encouraging perturbations to cluster closely in representation space.
+
+\paragraph{Objective.}  
+Standard training minimizes
+\[
+    \min_\theta \; \EE \big[ \loss(\theta, x, y) \big].
+\]
+With a robustness specification, this becomes a min–max optimization:
+\[
+    \min_\theta \; \EE \Big[ \max_{x' \in \varphi(x)} \loss_{(\varphi, \epsilon)}(\theta, x', y) \Big].
+\]
+Interpretation: minimize the worst-case loss over perturbations.  
+\emph{Challenge:} This problem is much harder to optimize, may fail to enforce specifications, and often degrades standard accuracy.
+
+\subsubsection{Individual Fairness and Randomized Smoothing}
+\textbf{Individual fairness:} If two datapoints are similar in relevant aspects for a task, they should receive similar predictions.  
+This is closely related to robustness: perturbations in sensitive attributes should not flip outputs.
+
+\textbf{Randomized smoothing:} An inference-time defense that replaces the classifier with a smoothed version.  
+Given an input $x$, add Gaussian noise and average predictions.  
+Guarantee: nearby inputs map to the same label with high probability.  
+Compared to certified training, randomized smoothing scales better but only provides guarantees for certain robustness properties.
+
+
+\subsection{Vertical II: Privacy}
+\label{sub:privacy_intro}
+Privacy in this course is primarily focused on \textbf{data privacy}: preventing leakage of sensitive information from models. Key research questions:
+
+\begin{itemize}
+	\item \textbf{Membership inference:} Given a datapoint $x$, can an attacker determine if $x$ was in the training set?
+	\item \textbf{Model inversion:} Can an attacker reconstruct a representative example from a given class?
+	\item \textbf{Training data extraction:} Can raw training samples be recovered from a model (e.g.\ LLMs regurgitating text)?
+	\item \textbf{Private attribute inference:} Can sensitive attributes (age, gender, location) be inferred from user data?  
+	\item \textbf{Model stealing:} Recovering model weights or functionality from black-box access.
+\end{itemize}
+
+Defenses:
+\begin{itemize}
+	\item \textbf{Differential Privacy (DP):} Add noise during training (e.g.\ DP-SGD).  
+	      Guarantees: presence/absence of one sample does not significantly affect the output distribution.  
+	      Trade-off: higher privacy $\leftrightarrow$ lower accuracy. Recent work shows DP-LLMs approaching performance of earlier non-private models.
+	\item \textbf{Federated Learning:} Train across distributed devices (e.g.\ smartphones) without centralizing data.  
+	      Related to fine-tuning multiple LLMs and merging them securely.
+\end{itemize}
+
+Beyond standalone models, in compound systems such as \textbf{agentic AI}, LLMs are integrated with external tools. Safety risks emerge from multi-step workflows (e.g.\ insecure protocols, toxic flows). Ensuring provable safety here remains an open challenge.
+
+% subsection privacy (end)
+
+\subsection{Vertical III: Provenance and Evaluation}
+\label{sub:provenance_intro}
+Two central themes in this vertical are \textbf{data attribution} (who generated what) and \textbf{evaluation} (how to measure performance fairly).
+
+\subsubsection{Watermarking and Data Attribution}
+\begin{itemize}
+	\item \textbf{Idea:} Randomly assign tokens a color (expect evenly distributed) and transform the output distribution to skew to a color.
+	\item \textbf{Threats:}
+		\begin{itemize}
+			\item \emph{Stealing:} Approximate the watermark distribution with repeated queries.
+			\item \emph{Spoofing:} Generate text that falsely appears to come from a target model.
+			\item \emph{Scrubbing:} Remove watermark to conceal that text was model-generated.
+		\end{itemize}
+\end{itemize}
+
+\subsubsection{Transformations and Safety}
+Common LLM transformations (quantization, pruning, distillation, fine-tuning) may impact safety and privacy guarantees.  
+
+\emph{Example:} A model appears normal pre-quantization in benchmarks, etc but after quantization begins inserting hidden adversarial content (e.g.\ advertisements).
+
+\subsubsection{Evaluation and Benchmarks}
+\begin{itemize}
+	\item \textbf{Benchmarks:}
+	      \begin{itemize}
+		      \item Closed-form (e.g.\ math problems with unique solutions, math arena).
+		      \item Preference-based (e.g.\ LLM Arena where users vote).
+	      \end{itemize}
+	\item \textbf{Contamination:} Training/test set overlap or task leakage.  
+	      Leads to inflated benchmark results.
+	\item \textbf{Real-world failures:} Some model releases (e.g.\ K2) were later shown to have flawed evaluations due to contamination or misleading comparisons.
+\end{itemize}
+\newpage
+% subsection provenance (end)
+%%%%%%%%%%%%%%%%% END OF LECTURE 1. %%%%%%%%%%%%%%%%% 
+
+\end{document}
