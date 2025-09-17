@@ -64,7 +64,7 @@ Standard training minimizes
 \]
 With a robustness specification, this becomes a min–max optimization:
 \[
-    \min_\theta \; \EE \Big[ \max_{x' \in \varphi(x)} \loss_{(\varphi, \epsilon)}(\theta, x', y) \Big].
+    \min_\theta \; \EE \Big[ \max_{x' \in \varphi(x)} \loss_{(\varphi, \psi)}(\theta, x', y) \Big].
 \]
 Interpretation: minimize the worst-case loss over perturbations.  
 \emph{Challenge:} This problem is much harder to optimize, may fail to enforce specifications, and often degrades standard accuracy.
