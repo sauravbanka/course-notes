@@ -152,6 +152,7 @@
 \newcommand{\CC}{\mathbb{C}}
 \newcommand{\PP}{\mathbb{P}}
 \newcommand{\EE}{\mathbb{E}}
+\newcommand{\FF}{\mathit{F}}
 
 % Probability distributions
 \newcommand{\Ber}{\operatorname{Ber}}
@@ -191,6 +192,7 @@
 \newcommand{\vx}{\bm{x}}
 \newcommand{\vy}{\bm{y}}
 \newcommand{\vv}{\bm{v}}
+\newcommand{\vb}{\bm{b}}
 \newcommand{\mA}{\bm{A}}
 \newcommand{\mI}{\mathbf{I}}
 
@@ -210,9 +212,10 @@
 % Probability & conditionals
 \newcommand{\given}{\;\middle|\;}
 \newcommand{\Econd}[2]{\EE\left[#1 \,\middle|\, #2\right]}
-\newcommand{\Pcond}[2]{\PP\left(#1 \,\middle|\, #2\right)}
+\newcommand{\Pcond}[2]{P\left(#1 \,\middle|\, #2\right)}
 \newcommand{\p}[1]{p\!\left(#1\right)}
 \newcommand{\q}[1]{q\!\left(#1\right)}
+\newcommand{\indep}{\perp \!\!\! \perp}
 
 % Gaussian processes & kernels
 \newcommand{\GP}[2]{\mathcal{GP}\!\left(#1, #2\right)}
@@ -245,6 +248,60 @@
     \fbox{\textsf{\textbf{DRAFT --- \today}}}
   \end{center}
 }
+
+%%%%%%%% CRYPTOGRAPHY MACROS %%%%%%%%
+% Algorithms / primitives
+\newcommand{\Gen}{\mathsf{Gen}}
+\newcommand{\KeyGen}{\mathsf{KeyGen}}
+\newcommand{\Enc}{\mathsf{Enc}}
+\newcommand{\Dec}{\mathsf{Dec}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Vrfy}{\mathsf{Vrfy}}
+\newcommand{\Mac}{\mathsf{Mac}}
+\newcommand{\VrfyMac}{\mathsf{VrfyMac}}
+\newcommand{\Com}{\mathsf{Com}}
+\newcommand{\Open}{\mathsf{Open}}
+
+% Security notions
+\newcommand{\INDCPA}{\mathsf{IND\text{-}CPA}}
+\newcommand{\INDCCA}{\mathsf{IND\text{-}CCA}}
+\newcommand{\PRF}{\mathsf{PRF}}
+\newcommand{\PRP}{\mathsf{PRP}}
+\newcommand{\EUFCMA}{\mathsf{EUF\text{-}CMA}}
+
+% Advantage / negligible
+\newcommand{\Adv}[2]{\mathsf{Adv}^{#1}_{#2}}
+\newcommand{\negl}{\mathsf{negl}}
+
+% Sets of keys, messages, ciphertexts
+\newcommand{\Keys}{\mathcal{K}}
+\newcommand{\Msgs}{\mathcal{M}}
+\newcommand{\Ciphers}{\mathcal{C}}
+
+%%%%%%%% PROTOCOL DIAGRAMS %%%%%%%%
+\usetikzlibrary{arrows.meta,shapes.multipart}
+
+\tikzset{
+  role/.style={rectangle, draw, minimum width=2.5cm, minimum height=0.9cm, font=\sffamily, align=center},
+  msg/.style={-{Latex[length=2mm]}, thick}
+}
+
+\newenvironment{protocol}[1][]{
+  \begin{tikzpicture}[#1, node distance=2cm]
+}{
+  \end{tikzpicture}
+}
+
+% Inline monospace
+\newcommand{\code}[1]{\texttt{#1}}
+
+%%%%%%%% CRYPTO MATH OPERATORS %%%%%%%%
+\DeclareMathOperator{\poly}{poly}
+\DeclareMathOperator{\polylog}{polylog}
+\DeclareMathOperator{\Time}{Time}
+\DeclareMathOperator{\Prob}{Pr}
+\DeclareMathOperator{\Supp}{Supp}
+
 
 %%%%%%%% HYPERREF FIXES %%%%%%%%
 \makeatletter

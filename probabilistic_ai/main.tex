@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[margin,header,sans,titlepage,bib]{../lecture_notes}
+\usepackage[margin,header,sans,titlepage]{../lecture_notes}
 
 \title{Probabilistic Artificial Intelligence}
 \author{Saurav Banka}
@@ -11,7 +11,235 @@
 \maketitle
 
 \section{Introduction}
+
 \subsection{Motivation}
+Uncertainty is all around us. This course discusses how to enable data-driven reasoning and decision-making under uncertainty. 
+
+\subsection{Probability Basics}
+Probability is formally defined by a probability space $(\Omega, \FF, P)$:
+\begin{itemize}
+    \item $\Omega$: Set of atomic events (e.g., throwing a die).
+    \item $\FF \subseteq 2^{\Omega}$ is a $\sigma$-algebra. Intuitively, it formalizes which types of events can occur.
+    \begin{itemize}
+        \item $\Omega \in \FF$
+        \item $A \in \FF \implies \Omega \setminus A \in \FF$ (intuition: the complement of an event is also an event).
+        \item $A_1, A_2, \dots \in \FF \implies \bigcup_{i} A_i \in \FF$ (intuition: the countable union of events must also be an event).
+    \end{itemize}
+    \item Probability measure $P: \FF \to [0,1]$ assigns a value to each event in $\FF$.
+\end{itemize}
+
+\paragraph{Axioms (Kolmogorov):}
+\begin{itemize}
+    \item $P(\Omega) = 1$
+    \item $P(A) \geq 0$ for all $A \in \FF$
+    \item For all disjoint $A_i \in \FF$, 
+    \[
+        P\Big(\bigcup_{i=1}^{\infty} A_i\Big) = \sum_{i=1}^\infty P(A_i).
+    \]
+\end{itemize}
+
+\paragraph{Random variables.}
+A random variable (RV) is a mapping $X: \Omega \to D$ where $D$ is some set of interest. Then,
+\[
+P(X = x) = P\big(\{\omega \in \Omega : X(\omega) = x\}\big),
+\]
+i.e., the probability that the variable $X$ takes on a particular value $x$.
+
+\paragraph{Continuous case.}
+For continuous values, we introduce a probability density:
+\[
+p(t) = \lim_{\delta \to 0} \frac{P(T \in [t, t + \delta])}{\delta}.
+\]
+
+\begin{definition}
+(Expected value)  
+Given a random variable $X$ on domain $D$ and a function $f: D \to \RR$, the expectation is
+\[
+\EE[f(X)] = \int_{x \in D} f(x)\, p(x)\, dx.
+\]
+\end{definition}
+
+Instead of a random variable, we can specify a random vector $\bm{X} = [X_i(\omega)]_{i=1}^N$.  
+The joint distribution describes relations among all variables. 
+
+\begin{definition}
+Conditional probability: For events $A, B$ with $P(B) > 0$,
+\[
+P(A \mid B) = \frac{P(A, B)}{P(B)}.
+\]
+\end{definition}
+
+\begin{definition}
+(Marginalization / Sum Rule)  
+\[
+P(X_{[1:n] \setminus i}) = \sum_{x_i} P(X_{1:i-1}, x_i, X_{i+1:n}).
+\]
+\end{definition}
+
+\begin{definition}
+(Product Rule / Chain Rule)  
+\[
+P(X_1, \dots, X_n) = P(X_1) \prod_{i=2}^n P(X_i \mid X_1, \dots, X_{i-1}).
+\]
+\end{definition}
+
+\begin{theorem}
+(Bayes' Rule)  
+\[
+P(X \mid Y) = \frac{P(X)P(Y \mid X)}{\sum_{x} P(X=x)\,P(Y \mid X=x)}.
+\]
+
+Proof: Can be seen by directly applyinng the product and sum rule to the def of conditional independence. 
+\end{theorem}
+
+\begin{definition}
+(Independence)  
+Random variables $X_1, \dots, X_n$ are independent if
+\[
+P(X_1 = x_1, \dots, X_n = x_n) = \prod_{i=1}^n P(X_i = x_i).
+\]
+Equivalently, $P(X_1 \mid X_2) = P(X_1)$.
+\end{definition}
+
+\begin{definition}
+(Conditional independence)  
+We write $X \indep Y \mid Z$ iff for all $x, y, z$,
+\[
+P(X=x, Y=y \mid Z=z) = P(X=x \mid Z=z)\,P(Y=y \mid Z=z),
+\]
+or equivalently,
+\[
+P(X=x \mid Y=y, Z=z) = P(X=x \mid Z=z).
+\]
+\end{definition}
+
+\paragraph{High-dimensional challenges.}
+Without dependence structure, we face:
+\begin{itemize}
+    \item \textbf{Representation:} requires $2^N - 1$ parameters for $N$ binary RVs.
+    \item \textbf{Marginalization:} computing marginals requires summing over $2^{N-1}$ terms.
+    \item \textbf{Inference:} conditional queries, learning, and prediction are all expensive.
+\end{itemize}
+
+\subsection{Multivariate Gaussians}
+Multivariate Gaussians (MVGs) are tractable for many of these problems.
+
+\begin{definition}
+(Covariance Matrix)  
+
+For a random vector $\vx \in \RR^d$ with mean $\bm{\mu} = \EE[\vx]$, the covariance matrix is
+\[
+\bm{\Sigma} = \EE\!\left[(\vx - \bm{\mu})(\vx - \bm{\mu})\T\right].
+\]
+Equivalently,
+\[
+\Sigma_{ij} = \Cov(X_i, X_j) = \EE\!\left[(X_i - \mu_i)(X_j - \mu_j)\right].
+\]
+\end{definition}
+
+\begin{definition}
+(Multivariate Gaussian)  
+The density of $\Nor(\vx; \bm{\mu}, \bm{\Sigma})$ is
+\[
+p(\vx) = \frac{1}{(2\pi)^{d/2}\sqrt{\abs{\bm{\Sigma}}}}
+\exp\!\Bigg(-\tfrac{1}{2}(\vx - \bm{\mu})\T \bm{\Sigma}^{-1}(\vx - \bm{\mu})\Bigg).
+\]
+\end{definition}
+
+\begin{theorem}
+In the Gaussian case, uncorrelated variables are independent.
+\end{theorem}
+
+\subsubsection{Computing marginals}
+Marginals of an index set $A$ are obtained by simply selecting the corresponding components of $\bm{\mu}$ and $\bm{\Sigma}$.  
+Formally, $X_A \sim \Nor(\mu_A, \Sigma_{AA})$.
+
+\subsubsection{Conditional distributions}
+Partition $\vx = \begin{bmatrix} \vx_A \\ \vx_B \end{bmatrix}$ with corresponding mean and covariance
+\[
+\bm{\mu} = \begin{bmatrix}\mu_A \\ \mu_B\end{bmatrix}, \quad
+\bm{\Sigma} = \begin{bmatrix}
+\Sigma_{AA} & \Sigma_{AB} \\
+\Sigma_{BA} & \Sigma_{BB}
+\end{bmatrix}.
+\]
+Then,
+\[
+\vx_A \mid \vx_B = b \;\sim\; \Nor\!\Big(\mu_A + \Sigma_{AB}\Sigma_{BB}^{-1}(b-\mu_B), \;\Sigma_{AA} - \Sigma_{AB}\Sigma_{BB}^{-1}\Sigma_{BA}\Big).
+\]
+
+\begin{note}
+\textbf{Interpretation.}  
+
+\begin{itemize}
+    \item The updated mean 
+    \[
+    \mu_{A \mid B} = \mu_A + \Sigma_{AB}\Sigma_{BB}^{-1}(b - \mu_B)
+    \]
+    is the prior mean $\mu_A$ shifted by an adjustment term.  
+
+    \begin{itemize}
+        \item $\Sigma_{AB}$ is the \emph{cross-covariance}, describing how uncertainty in $A$ co-varies with $B$.  
+        \item $\Sigma_{BB}^{-1}$ is the \emph{precision matrix} of $B$, which corrects for redundancy among components of $B$: highly correlated features of $B$ contribute less uniquely to the update.  
+        \item Together, $\Sigma_{AB}\Sigma_{BB}^{-1}$ acts like a regression coefficient matrix mapping observed deviations $(b-\mu_B)$ into updates of $A$'s mean.  
+    \end{itemize}
+
+    \item The updated covariance
+    \[
+    \Sigma_{A \mid B} = \Sigma_{AA} - \Sigma_{AB}\Sigma_{BB}^{-1}\Sigma_{BA}
+    \]
+    is always smaller (in the PSD sense) than $\Sigma_{AA}$.  
+    Intuitively: conditioning on $B$ reduces uncertainty about $A$.
+\end{itemize}
+\end{note}
+
+
+\subsubsection{Affine transformations of Gaussians}
+If $\vx \sim \Nor(\mu, \Sigma)$ and $\vy = M\vx + b$ for matrix $M$ and vector $\vb$, then
+\[
+\vy \sim \Nor(A\mu + b, \; M\Sigma M\T).
+\]
+
+A natural extension is to use $1$-hot vectors as rows of $A$ to express marginals or sums: this shows directly that linear combinations (and in particular sums) of Gaussians are Gaussian. It also allows us to represent \emph{degenerate Gaussians}, where some components have constant mean and zero variance to allow for the covariance matrix to have certain eigenvalues corresponding to 0. 
+
+\subsubsection{Conditional Linear Gaussians}
+If $\vy \mid \vx \sim \Nor(A\vx + \vb, \Sigma_y)$ with $\vx \sim \Nor(\mu_x, \Sigma_x)$, then the joint distribution is Gaussian:
+\[
+\begin{bmatrix}\vx \\ \vy\end{bmatrix}
+\sim \Nor\!\left(
+\begin{bmatrix}\mu_x \\ A\mu_x + \vb\end{bmatrix}, \;
+\begin{bmatrix}
+\Sigma_x & \Sigma_x A\T \\
+A\Sigma_x & A\Sigma_x A\T + \Sigma_y
+\end{bmatrix}
+\right).
+\]
+This structure is fundamental in Bayesian networks with Gaussian conditional distributions.
+
+\begin{note}
+\textbf{Interpretation.}  
+
+The conditional distribution $P(\vx \mid \vy)$ has the form
+\[
+\vx \mid \vy \;\sim\; \Nor(M\vy + b, \;\Sigma_{x \mid y}),
+\]
+for some matrix $M$, vector $b$, and covariance $\Sigma_{x \mid y}$.
+
+\begin{itemize}
+    \item The term $M\vy + b$ shows that the conditional mean is an \emph{affine function} of the observed variable $\vy$.  
+    This means that, once we observe $\vy$, our best prediction of $\vx$ is a linear regression on $\vy$.
+
+    \item The covariance $\Sigma_{x \mid y}$ represents the residual uncertainty that cannot be explained by $\vy$.  
+    It acts like \emph{independent Gaussian noise} added to the linear prediction.  
+
+    \item Equivalently: the conditional Gaussian says \[
+    \vx = M\vy + b + \epsilon, \quad \epsilon \sim \Nor(0, \Sigma_{x \mid y}),
+    \]
+    which makes explicit the regression + noise interpretation.
+\end{itemize}
+This viewpoint underlies Gaussian graphical models and Bayesian linear regression.
+\end{note}
+
 \newpage
 
 \section{Bayesian Linear Regression}
@@ -24,7 +252,7 @@
 \section{Variational Inference}
 \newpage
 
-\section{Markov Chain Monte Carlo}
+\section{Markov Chain Monte Carlo.}
 \newpage
 
 \section{Bayesian Deep Learning}

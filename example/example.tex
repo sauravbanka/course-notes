@@ -144,6 +144,102 @@ We can reference earlier results:
 \end{itemize}
 
 
+\section{Cryptography Examples}
+
+\subsection{Notation}
+An encryption scheme $(\KeyGen,\Enc,\Dec)$ is $\INDCPA$-secure if
+for all PPT adversaries $\mathcal{A}$,
+\[
+  \Adv{\INDCPA}{\mathcal{A}}(\lambda) \le \negl(\lambda).
+\]
+
+\subsection{Protocol Diagram}
+\begin{protocol}
+  \node[role] (A) {Alice \\ $sk_A, pk_A$};
+  \node[role, right=6cm of A] (B) {Bob \\ $sk_B, pk_B$};
+
+  \draw[msg] (A) -- (B) node[midway, above] {$m_1 = \Enc_{pk_B}(k)$};
+  \draw[msg] (B) -- (A) node[midway, below] {$m_2 = \Enc_{pk_A}(ack)$};
+\end{protocol}
+
+\subsection{Crypto Algorithm}
+\begin{algorithm}
+\caption{Key Exchange (simplified)}
+\begin{algorithmic}[1]
+\State \textbf{Input:} Security parameter $\lambda$
+\State $A, B \gets \KeyGen(1^\lambda)$
+\State \algorithmicchoose random $k \in \{0,1\}^\lambda$
+\State $c \gets \Enc_{pk_B}(k)$
+\State Send $c$ to Bob
+\State Bob: $k' \gets \Dec_{sk_B}(c)$
+\State \algorithmicreturn shared key $k$
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Needham--Schroeder Protocol Example}
+\begin{protocol}
+  % Roles
+  \node[role] (A) {Alice \\ $pk_A, sk_A$};
+  \node[role, right=6cm of A] (B) {Bob \\ $pk_B, sk_B$};
+  \node[role, below=3cm of A] (M) {Mallory};
+  \node[role, below=3cm of B] (C) {Certificate Server};
+
+  % Certificate distribution
+  \draw[msg] (C) -- (A) node[midway, left] {$pk_B$};
+  \draw[msg] (C) -- (B) node[midway, right] {$pk_A$};
+
+  % Needham-Schroeder messages
+  \draw[msg] (A) -- (B) node[midway, above] {$\Enc_{pk_B}(N_A, A)$};
+  \draw[msg] (B) -- (A) node[midway, below] {$\Enc_{pk_A}(N_A, N_B)$};
+  \draw[msg] (A) -- (B) node[midway, above] {$\Enc_{pk_B}(N_B)$};
+
+  % Mallory intercept example
+  \draw[msg, dashed, red] (A) -- (M) node[midway, left] {Intercept};
+  \draw[msg, dashed, red] (M) -- (B) node[midway, left] {Replay};
+\end{protocol}
+
+\subsection{Alice's Steps}
+\begin{algorithm}
+\caption{Alice (Needham--Schroeder Initiator)}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $pk_B$ from Certificate Server
+\State \algorithmicchoose fresh nonce $N_A$
+\State $c_1 \gets \Enc_{pk_B}(N_A, A)$
+\State Send $c_1$ to Bob
+\State Receive $c_2$
+\State $(N_A', N_B) \gets \Dec_{sk_A}(c_2)$
+\If{$N_A' = N_A$}
+  \State $c_3 \gets \Enc_{pk_B}(N_B)$
+  \State Send $c_3$ to Bob
+  \State \algorithmicreturn success
+\Else
+  \State \algorithmicreturn abort
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Bob's Steps}
+\begin{algorithm}
+\caption{Bob (Needham--Schroeder Responder)}
+\begin{algorithmic}[1]
+\State \textbf{Input:} $pk_A$ from Certificate Server
+\State Receive $c_1$
+\State $(N_A, A) \gets \Dec_{sk_B}(c_1)$
+\State \algorithmicchoose fresh nonce $N_B$
+\State $c_2 \gets \Enc_{pk_A}(N_A, N_B)$
+\State Send $c_2$ to Alice
+\State Receive $c_3$
+\State $N_B' \gets \Dec_{sk_B}(c_3)$
+\If{$N_B' = N_B$}
+  \State \algorithmicreturn authenticated session
+\Else
+  \State \algorithmicreturn abort
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+
 \section{Draft notes and side notes}
 This is a sentence. \draftnote{Check this step later.} \\
 This needs a picture \sidenote{Draw diagram here}.
