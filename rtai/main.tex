@@ -144,52 +144,51 @@ Common LLM transformations (quantization, pruning, distillation, fine-tuning) ma
 \subsection{Examples}
 \begin{itemize}
 	\item Noisy attacks and perturbations: add imperceptible noise to humans, changes label. Also applicable in other domains like reinforcement learning paradigm, NLP and audio-to-text.
-	\item Physical attacks: Tape on stop signs changes prediction
-	\item In systems: Missing/patches in immages causes self-driving cars
-	\item Geometric pertubations: rotations / translations, etc. This is interesting class of attacks as it is in a lower-dimensional space (e.g. degree of rotation vs higher-dimension pixel space) and doesn't need access to gradients
+	\item Physical attacks: Tape on stop signs changes prediction.
+	\item In systems: Patches in images cause self-driving cars to make incorrect decisions.
+	\item Geometric perturbations: rotations / translations, etc. This is an interesting class of attacks as it is in a lower-dimensional space (e.g. degree of rotation vs higher-dimension pixel space) and doesn't need access to gradients.
 \end{itemize}
 
 \subsection{Adversarial Attacks}
 Types of attacks:
 \begin{itemize}
 	\item \textbf{Targeted attack}: Misclassify input to a specific label, or get an LLM to generate a specific text. 
-	\item \textbf{Untargeted attack}: Misclassify input to any wrong label. These tend to capture the worst case, and optimization problems usually utilize this in adversarial defences.
+	\item \textbf{Untargeted attack}: Misclassify input to any wrong label. These tend to capture the worst case, and optimization problems usually utilize this in adversarial defenses.
 \end{itemize}
 
 Information known to the adversary:
 \begin{itemize}
-	\item \textbf{White box attacks}: Attacker know the model, parameters, model architecture (essentially everything)
-	\item \textbf{Black box attacks}: Attacker knows weights but not the parameters, but maybe the logits.  
+	\item \textbf{White box attacks}: Attacker knows the model, parameters, model architecture (essentially everything).
+	\item \textbf{Black box attacks}: Attacker does not know the model internals, but may have query access to outputs or logits.  
 \end{itemize}
-Adversarial attacks are transferrable: an attacker can train their own mirror network (e.g. distill model, etc) and use white-box techniques on the black-box network. This works with high success rate. (Note: do proofs for certain properties also transfer? Turns out that they transfer under certain specifications).
-
+Adversarial attacks are transferable: an attacker can train their own mirror network (e.g. distill model, etc.) and use white-box techniques on the black-box network. This works with high success rate. (Note: do proofs for certain properties also transfer? Turns out that they transfer under certain specifications).
 
 \subsubsection{Targeted attack - Targeted FGSM}
-\textbf{Setup}: Given an a neural network $f: X \Rightarrow C$, input $x \in X$, target label $t \in C$ such that $f(x) \neq t$, the output should be a perturbation $\eta$ s.t $f(x + \eta) = t$.
+\textbf{Setup}: Given a neural network $f: X \Rightarrow C$, input $x \in X$, target label $t \in C$ such that $f(x) \neq t$, the output should be a perturbation $\eta$ s.t. $f(x + \eta) = t$.
 
-One way to perform this attack is using Targeted FGSM, which is designed to be fast / one-step, $\epsilon$ is a small constant part of the spec. Since FGSM is 1-step, $x'$ guaranteed to stay in box $[x - \epsilon, x + \epsilon]$
+One way to perform this attack is using Targeted FGSM, which is designed to be fast / one-step. $\epsilon$ is a small constant part of the spec. Since FGSM is 1-step, $x'$ is guaranteed to stay within $[x_i - \epsilon, x_i + \epsilon]$ for each coordinate.
 
 \begin{algorithm}
 \caption{Targeted Fast Gradient Sign Method}
 \begin{algorithmic}[1]
-\State Compute the perturbation: $\eta = \epsilon * sign(\nabla_x loss_t(x))$
+\State Compute the perturbation: $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x L(x, t))$
 \State Perturb the input: $x' = x - \eta$
 \State Check if $f(x') = t$ 
 \end{algorithmic}
 \end{algorithm}
 
 \begin{note}
-	Intuition: Perturb the input to reduce the loss of classifying the image as label $t$. No guarantees on magnitude of $t$ which may make perturnations too noticable.
+	Intuition: Perturb the input to reduce the loss of classifying the image as label $t$. No guarantees on magnitude of $\eta$, which may make perturbations too noticeable.
 \end{note}
 
 \subsubsection{Untargeted attack}
-Given an a neural network $f: X \Rightarrow C$, input $x \in X$, the output should be a perturbation $\eta$ s.t $f(x + \eta) \neq f(x)$.
+Given a neural network $f: X \Rightarrow C$, input $x \in X$, the output should be a perturbation $\eta$ s.t. $f(x + \eta) \neq f(x)$.
 
 \begin{algorithm}
 \caption{Untargeted Fast Gradient Sign Method}
 \begin{algorithmic}[1]
-\State Compute the perturbation: $\eta = \epsilon * sign(\nabla_x loss_s(x))$
-\State Perturb the input: $x' = x _ \eta$
+\State Compute the perturbation: $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x L(x, s))$
+\State Perturb the input: $x' = x + \eta$
 \State Check if $f(x') \neq s$ 
 \end{algorithmic}
 \end{algorithm}
@@ -199,9 +198,9 @@ Given an a neural network $f: X \Rightarrow C$, input $x \in X$, the output shou
 \end{note}
 
 \subsubsection{Targeted attack with small changes - Carlini and Wagner}
-To ensure that the perturbed image is similar to the initial image, we need a notion of distance between the input and perturbed images (e.g. $l_\infty$ norm which captures the maximum noise change). 
+To ensure that the perturbed image is similar to the initial image, we need a notion of distance between the input and perturbed images (e.g. $\ell_\infty$ norm which captures the maximum noise change). 
 
-\textbf{Setup}: Same setup as target attack, with the additional constraint that $\norm{\eta}_p$ is minimized. Set up an optimization problem to find $\eta$
+\textbf{Setup}: Same setup as targeted attack, with the additional constraint that $\norm{\eta}_p$ is minimized. Set up an optimization problem to find $\eta$.
 
 This is an optimization problem defined as follows:
 \[
@@ -212,7 +211,7 @@ This is an optimization problem defined as follows:
 
 \textbf{Issue 1}: The first issue is that $f(x + \eta) = t$ is a hard discrete constraint which is hard to optimize. The key insight is to relax this to a soft optimization problem as defined in the paper \cite{carlini2017towards}. Two steps:
 \begin{enumerate}
-	\item Define a proxy function $obj_t$ such that if $obj_t(x + \eta) \leq 0$ then $f(x + \eta) = t$
+	\item Define a proxy function $obj_t$ such that if $obj_t(x + \eta) \leq 0$ then $f(x + \eta) = t$.
 	\item Solve the following optimization problem:
 	\[
 	  \optprob{Find $\eta^*$}{\min}{\norm{\eta}_p + c \cdot obj_t(x + \eta)}[%
@@ -231,8 +230,8 @@ This is an optimization problem defined as follows:
 $\displaystyle -\log_2 p(t) - 1$ &
 \begin{minipage}[t]{0.65\textwidth}
 \begin{itemize}[leftmargin=*]
-    \item If $obj_t(x) \le 0$, then $p(t) \ge 0.5$.
-    \item But if $p(t) \ge 0.5$ for the input $x$, then $f$ will return $t$ as a classification for $x$ because this is the highest probability class.
+    \item If $obj_t(x) \le 0$, then $p(t) \ge 0.5$ (binary case).
+    \item If $p(t) \ge 0.5$ for the input $x$, then $f$ will return $t$ as a classification for $x$ because this is the highest probability class.
     \item Smooth and decreases as $p(t)$ increases, so it strongly encourages reclassification, especially when $p(t)$ is small.
 \end{itemize}
 \end{minipage} \\
@@ -344,25 +343,24 @@ PGD is an iterative untargeted attack that searches the allowed perturbation reg
 
 Defense can be viewed as the following optimization problem:
 \[
-	\min_\theta \EE_{(x, y) \sim D}\left[ \max_{x' \in S(x)} L(\theta, x, y) \right]
+	\min_\theta \EE_{(x, y) \sim D}\left[ \max_{x' \in S(x)} L(\theta, x', y) \right]
 \]
 
-Where $D$ is the underlying distribution, $S(x) = \{x' \in \RR^n | \norm{x - x'}_p \leq \epsilon \}$ is the perturbation region. Intuitively, we're minimizing the empirical risk of the worst case behavior in the perturbation region.
-
-In practice, this is done as follows:
+Where $D$ is the underlying distribution, $S(x) = \{x' \in \RR^n \mid \norm{x - x'}_p \leq \epsilon \}$ is the perturbation region. Intuitively, we're minimizing the empirical risk of the worst case behavior in the perturbation region.
 
 \begin{algorithm}
 \caption{Adversarial training using PGD}
 \begin{algorithmic}[1]
 \State Select minibatch $B$ from dataset $D$.
 \For{$(x, y) \in B$}
-	\State Find $x_{max} = \argmax_{x' \in S(x)}{L(\theta, x', y)}$ (e.g. using PGD)
+	\State Find $x_{max} = \argmax_{x' \in S(x)} L(\theta, x', y)$ (e.g. using PGD)
 \EndFor
-\State Solve outer optimization problem: $\theta \gets $\theta - \frac{1}{|B_{max}|}\sum_{(x_{max}, y) \in B_{max}} \nabla_{\theta} L(\theta, x_{max}, y)$
+\State Update parameters: $\theta \gets \theta - \frac{1}{|B_{max}|}\sum_{(x_{max}, y) \in B_{max}} \nabla_{\theta} L(\theta, x_{max}, y)$
 \end{algorithmic}
 \end{algorithm}
 
-Model capacity is important - larger networks are more defendable, whereas training smaller networks with PGD negatively affects accuracy. On large networks, accuracy on test set may still suffer due to adversarial pretraining. Usually, training with adversarial examples from PGD attacks performs better than training with adversarial examples using FGSM.
+Model capacity is important as larger networks are more defensible, whereas training smaller networks with PGD negatively affects accuracy. On large networks, accuracy on test set may still suffer due to adversarial pretraining. Usually, training with adversarial examples from PGD attacks performs better than training with adversarial examples using FGSM.
+
 
 \newpage
 \subsection{Lecture 3: }
