@@ -143,78 +143,79 @@ Common LLM transformations (quantization, pruning, distillation, fine-tuning) ma
 \section{Lecture 2: Adversarial Attacks and Defenses (24.09.2025)} % (fold)
 \subsection{Examples}
 \begin{itemize}
-	\item Noisy attacks and perturbations: add imperceptible noise that does not affect humans but changes the label. Also applicable in other domains such as reinforcement learning, NLP, and audio-to-text.
-	\item Physical attacks: adding tape or patches to stop signs changes predictions.
-	\item In systems: patches placed on camera inputs can cause self-driving cars to make incorrect decisions.
-	\item Geometric perturbations: rotations, translations, etc. This is an interesting class of attacks since it lies in a lower-dimensional space (e.g. degrees of rotation vs. high-dimensional pixel space) and does not necessarily require access to gradients.
+	\item Noisy attacks and perturbations: add imperceptible noise to humans, changes label. Also applicable in other domains like reinforcement learning paradigm, NLP and audio-to-text.
+	\item Physical attacks: Tape on stop signs changes prediction
+	\item In systems: Missing/patches in immages causes self-driving cars
+	\item Geometric pertubations: rotations / translations, etc. This is interesting class of attacks as it is in a lower-dimensional space (e.g. degree of rotation vs higher-dimension pixel space) and doesn't need access to gradients
 \end{itemize}
 
 \subsection{Adversarial Attacks}
 Types of attacks:
 \begin{itemize}
 	\item \textbf{Targeted attack}: Misclassify input to a specific label, or get an LLM to generate a specific text. 
-	\item \textbf{Untargeted attack}: Misclassify input to any wrong label. These tend to capture the worst case, and optimization problems usually utilize this in adversarial defenses.
+	\item \textbf{Untargeted attack}: Misclassify input to any wrong label. These tend to capture the worst case, and optimization problems usually utilize this in adversarial defences.
 \end{itemize}
 
 Information known to the adversary:
 \begin{itemize}
-	\item \textbf{White-box attacks}: Attacker knows the model, parameters, architecture (essentially everything).
-	\item \textbf{Black-box attacks}: Attacker does not know the parameters or weights, but may have query access to predictions or logits.  
+	\item \textbf{White box attacks}: Attacker know the model, parameters, model architecture (essentially everything)
+	\item \textbf{Black box attacks}: Attacker knows weights but not the parameters, but maybe the logits.  
 \end{itemize}
-Adversarial attacks are transferable: an attacker can train their own surrogate network (e.g. via distillation) and use white-box techniques to generate adversarial examples that often transfer with high success rate to black-box models. (Note: do proofs for certain properties also transfer? In some cases, yes, under specific conditions.)
+Adversarial attacks are transferrable: an attacker can train their own mirror network (e.g. distill model, etc) and use white-box techniques on the black-box network. This works with high success rate. (Note: do proofs for certain properties also transfer? Turns out that they transfer under certain specifications).
 
-\subsubsection{Targeted attack – Targeted FGSM}
-\textbf{Setup}: Given a neural network $f: X \to C$, input $x \in X$, and target label $t \in C$ such that $f(x) \neq t$, the goal is to find a perturbation $\eta$ such that $f(x + \eta) = t$.
 
-One way to perform this attack is using Targeted FGSM, a fast one-step method. $\epsilon$ is a small constant controlling the perturbation. FGSM ensures that $\| \eta \|_\infty \leq \epsilon$, i.e. each pixel lies in $[x_i - \epsilon,\, x_i + \epsilon]$.
+\subsubsection{Targeted attack - Targeted FGSM}
+\textbf{Setup}: Given an a neural network $f: X \Rightarrow C$, input $x \in X$, target label $t \in C$ such that $f(x) \neq t$, the output should be a perturbation $\eta$ s.t $f(x + \eta) = t$.
+
+One way to perform this attack is using Targeted FGSM, which is designed to be fast / one-step, $\epsilon$ is a small constant part of the spec. Since FGSM is 1-step, $x'$ guaranteed to stay in box $[x - \epsilon, x + \epsilon]$
 
 \begin{algorithm}
 \caption{Targeted Fast Gradient Sign Method}
 \begin{algorithmic}[1]
-\State Compute the perturbation: $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x L(x, t))$
+\State Compute the perturbation: $\eta = \epsilon * sign(\nabla_x loss_t(x))$
 \State Perturb the input: $x' = x - \eta$
 \State Check if $f(x') = t$ 
 \end{algorithmic}
 \end{algorithm}
 
 \begin{note}
-	Intuition: perturb the input to reduce the loss for classifying the image as label $t$. No guarantees on perturbation magnitude — it may still be noticeable.
+	Intuition: Perturb the input to reduce the loss of classifying the image as label $t$. No guarantees on magnitude of $t$ which may make perturnations too noticable.
 \end{note}
 
 \subsubsection{Untargeted attack}
-Given a neural network $f: X \to C$ and input $x \in X$, find a perturbation $\eta$ such that $f(x + \eta) \neq f(x)$.
+Given an a neural network $f: X \Rightarrow C$, input $x \in X$, the output should be a perturbation $\eta$ s.t $f(x + \eta) \neq f(x)$.
 
 \begin{algorithm}
 \caption{Untargeted Fast Gradient Sign Method}
 \begin{algorithmic}[1]
-\State Compute the perturbation: $\eta = \epsilon \cdot \operatorname{sign}(\nabla_x L(x, s))$ \Comment{$s = f(x)$ is the current label}
-\State Perturb the input: $x' = x + \eta$
+\State Compute the perturbation: $\eta = \epsilon * sign(\nabla_x loss_s(x))$
+\State Perturb the input: $x' = x _ \eta$
 \State Check if $f(x') \neq s$ 
 \end{algorithmic}
 \end{algorithm}
 
 \begin{note}
-	Intuition: maximize the loss for the current label $s$ to push the example away from its original classification.
+	Intuition: Find perturbations to try to "get away" from current label $s$ by maximizing the value of the loss. 
 \end{note}
 
-\subsubsection{Targeted attack with small changes – Carlini \& Wagner}
-To ensure the perturbed image is similar to the original, we constrain the perturbation norm (e.g. $\ell_\infty$ norm).
+\subsubsection{Targeted attack with small changes - Carlini and Wagner}
+To ensure that the perturbed image is similar to the initial image, we need a notion of distance between the input and perturbed images (e.g. $l_\infty$ norm which captures the maximum noise change). 
 
-\textbf{Setup}: Same as targeted attack, but minimize $\|\eta\|_p$ subject to $f(x+\eta) = t$ and $x + \eta \in [0,1]^n$.
+\textbf{Setup}: Same setup as target attack, with the additional constraint that $\norm{\eta}_p$ is minimized. Set up an optimization problem to find $\eta$
 
-Formulated as:
+This is an optimization problem defined as follows:
 \[
-  \optprob{Find $\eta^*$}{\min}{\|\eta\|_p}[%
+  \optprob{Find $\eta^*$}{\min}{\norm{\eta}_p}[%
     f(x+\eta) = t \\ x + \eta \in [0, 1]^n
   ]
 \]
 
-\textbf{Issue 1:} The discrete constraint $f(x+\eta) = t$ is hard to optimize. Relaxation (Carlini \& Wagner \cite{carlini2017towards}):
+\textbf{Issue 1}: The first issue is that $f(x + \eta) = t$ is a hard discrete constraint which is hard to optimize. The key insight is to relax this to a soft optimization problem as defined in the paper \cite{carlini2017towards}. Two steps:
 \begin{enumerate}
-	\item Define a proxy objective $obj_t$ such that $obj_t(x+\eta) \leq 0 \implies f(x+\eta) = t$.
-	\item Optimize:
+	\item Define a proxy function $obj_t$ such that if $obj_t(x + \eta) \leq 0$ then $f(x + \eta) = t$
+	\item Solve the following optimization problem:
 	\[
-	  \optprob{Find $\eta^*$}{\min}{\|\eta\|_p + c \cdot obj_t(x+\eta)}[%
+	  \optprob{Find $\eta^*$}{\min}{\norm{\eta}_p + c \cdot obj_t(x + \eta)}[%
 	    \eta \in [0, 1]^n
 	  ]
 	\]
@@ -225,14 +226,14 @@ Formulated as:
 \renewcommand{\arraystretch}{1.4}
 \begin{tabular}{|c|c|}
 \hline
-\textbf{Objective function} & \textbf{Explanation} \\
+\textbf{Objective function} & \textbf{Explanation and why it works} \\
 \hline
-$\displaystyle -\log p(t) - 1$ &
+$\displaystyle -\log_2 p(t) - 1$ &
 \begin{minipage}[t]{0.65\textwidth}
 \begin{itemize}[leftmargin=*]
-    \item If $obj_t(x) \le 0$, then $p(t) \ge 0.5$ (binary case).
-    \item If $p(t) \ge 0.5$, then $f$ will classify as $t$.
-    \item Smooth and decreases as $p(t)$ increases, encouraging reclassification.
+    \item If $obj_t(x) \le 0$, then $p(t) \ge 0.5$.
+    \item But if $p(t) \ge 0.5$ for the input $x$, then $f$ will return $t$ as a classification for $x$ because this is the highest probability class.
+    \item Smooth and decreases as $p(t)$ increases, so it strongly encourages reclassification, especially when $p(t)$ is small.
 \end{itemize}
 \end{minipage} \\
 \hline
@@ -240,39 +241,128 @@ $\displaystyle \max\!\bigl(0,\,0.5 - p(t)\bigr)$ &
 \begin{minipage}[t]{0.65\textwidth}
 \begin{itemize}[leftmargin=*]
     \item If $obj_t(x) \le 0$, then $p(t) \ge 0.5$.
-    \item Penalizes when $p(t) < 0.5$, pushing toward target.
-    \item Stops pushing once $p(t) \ge 0.5$, enforcing minimal change.
+    \item Same as above, $f$ will return $t$ as a classification for $x$ because this is the highest probability class.
+    \item Penalizes only when $p(t) < 0.5$, pushing toward reclassification.
+    \item Stops pushing once $p(t) \ge 0.5$, enforcing only the minimum change needed.
 \end{itemize}
 \end{minipage} \\
 \hline
 \end{tabular}
-\caption{Examples of CW-style objectives. In practice, logits are often used instead of probabilities.}
+\caption{Examples of CW-style objective functions. Both satisfy the Step~1 property:
+if $obj_t(x + \eta) \le 0$ then $f(x + \eta)=t$.} 
 \end{table}
 
-% (retain your notes about Issue 2, Issue 3, PGD, etc. – unchanged except fixed typos/notation)
+\begin{exercise}
+	Read through C\&W paper \cite{carlini2017towards} and work through why the property in step 1 holds and the intuition behind the other 6 objectives mentioned in addition to the two above.
+\end{exercise}
 
-\subsection{Defenses}
-\textbf{Adversarial accuracy}: When measuring accuracy, generate adversarial examples for correctly classified test points. For example, if 95/100 are correct, and 15 of these are broken by adversarial examples, then adversarial accuracy = 80\%. Increasing adversarial accuracy usually decreases standard accuracy. 
-
-Defense optimization:
+\textbf{Issue 2}: $\norm{\eta}_\infty$ is hard to optimize. 
+\begin{note}
+The following content wasn't covered in lecture, but linked as a Youtube video. \\ \\
+The $\ell_\infty$ norm measures the maximum change across all coordinates:
 \[
-	\min_\theta \; \EE_{(x, y) \sim D}\left[ \max_{x' \in S(x)} L(\theta, x', y) \right]
+\norm{\eta}_\infty = \max_i |\eta_i|.
+\]
+This is a non-smooth function: the gradient is nonzero only at the coordinates that currently achieve the maximum value, and is zero everywhere else. As a result, gradient descent will only update one coordinate at a time (the maximum one). Additionally, since this is not the only objective being optimized due to constraints, the components decreased in one iteration may be increased again in a subsequent one, leading to oscillations and very slow convergence. This makes direct optimization of $\norm{\eta}_\infty$ impractical. 
+
+To overcome this, replace $\norm{\eta}_\infty$ with a proxy:
+\[
+L(\eta) = \sum_i \max(0,\, |\eta_i| - \tau),
+\]
+where $\tau$ is gradually decreased during optimization. The gradient of this proxy is
+\[
+\frac{\partial L}{\partial \eta_i} =
+\begin{cases}
+\operatorname{sign}(\eta_i), & |\eta_i| > \tau, \\
+0, & |\eta_i| \leq \tau,
+\end{cases}
+\]
+which means that all coordinates exceeding $\tau$ are penalized simultaneously, spreading the optimization effort instead of focusing only on the single maximum.
+
+When optimization finishes, the smallest feasible $\tau$ corresponds exactly to the $\ell_\infty$ bound on $\eta$. Thus, minimizing the proxy objective yields the same solution as minimizing $\norm{\eta}_\infty$, but in a way that is smooth, well-behaved, and more suitable for gradient-based methods.
+\end{note}
+
+\textbf{Issue 3}: Dealing with box constraints.  
+
+When we perturb the input $x$, the perturbed version $x+\eta$ must remain a valid image, i.e.\ each pixel must lie within $[0,1]$. This imposes a \emph{box constraint}:
+\[
+x+\eta \in [0,1]^n \quad \Longleftrightarrow \quad \eta_i \in [-x_i,\, 1-x_i] \;\; \text{for all } i.
 \]
 
-Where $S(x) = \{x' \in \RR^n \mid \|x - x'\|_p \leq \epsilon\}$ is the perturbation region. 
+To keep the image within the box constraint, two potential approaches:
+\begin{enumerate}
+\item\textbf{Projected gradient descent (PGD)} handles this by projecting back into the box after each update:
+\[
+project(\eta) = \bigl(clip_1(\eta_1), \dots, clip_n(\eta_n)\bigr),
+\]
+where 
+\[
+clip_i(\eta_i) =
+\begin{cases}
+-x_i, & \eta_i < -x_i, \\
+\eta_i, & \eta_i \in [-x_i, 1-x_i], \\
+1-x_i, & \eta_i > 1-x_i.
+\end{cases}
+\]
+This ensures every update keeps $x+\eta$ within the valid range.
+
+\item\textbf{Carlini--Wagner} instead use the L-BFGS-B optimizer, a quasi-Newton method that directly supports box constraints. At a high level, L-BFGS-B:
+\begin{itemize}[leftmargin=*]
+    \item Approximates second-order information (curvature) using limited memory, making it more efficient than full Newton’s method.  
+    \item Incorporates the box constraints $\eta_i \in [-x_i,\,1-x_i]$ directly into the optimization procedure.  
+    \item Ensures that every step taken respects the bounds, so no explicit projection is needed afterward.  
+\end{itemize}
+\end{enumerate}
+
+In both cases, the goal is the same: enforce the constraint that perturbed images remain valid inputs while searching for adversarial examples.
+
+\subsubsection{Projected Gradient Descent (PGD) attack}
+
+PGD is an iterative untargeted attack that searches the allowed perturbation region for a point that \emph{maximizes} the loss (i.e. likely to cause misclassification). Starting from a random point inside the allowed box to avoid always following the same gradient trajectory, take several small FGSM-like steps. After each FGSM step we \emph{project} back to the feasible set so the perturbed image remains valid.
+
+\begin{note}
+	\textbf{Intuition:} 
+	\begin{itemize}[leftmargin=*]
+	  \item PGD seeks a point \emph{inside the allowed box} that yields large loss (and therefore likely a different label).
+	  \item Randomizing the start avoids always searching from the same corner of the box and helps find stronger adversarial points.
+	  \item Using many small FGSM-like steps explores the box more carefully than a single big step.
+	  \item Projecting after each step guarantees $x^{(t)}$ remains a valid image and stays within the allowed perturbation radius.
+	\end{itemize}
+\end{note}
+
+\begin{note}
+    \textbf{Projections:}
+    \begin{itemize}[leftmargin=*]
+      \item For $\ell_\infty$ constraints, projection is cheap: each pixel is simply clipped coordinate-wise to $[x_i-\varepsilon,\,x_i+\varepsilon]\cap[0,1]$. 
+      \item Cheap projections are essential since PGD projects at every step. If projection were expensive, the attack would be too impractical or too expensive to use in adversarial pre-training.
+      \item In contrast, projecting onto general convex polyhedra can be computationally hard, and finding efficient methods is an open problem.
+    \end{itemize}
+\end{note}
+
+\subsection{Defenses}
+\textbf{Adversarial accuracy}: When measuring the accuracy of a model, we generate adversarial examples on correctly classified examples in the test set.  (E.g. 95/100 examples classified correctly, 15 adversarial examples found i.e. 80\% adversarial accuracy). Raising the adversarial accuracy often hurts the overall test accuracy. 
+
+Defense can be viewed as the following optimization problem:
+\[
+	\min_\theta \EE_{(x, y) \sim D}\left[ \max_{x' \in S(x)} L(\theta, x, y) \right]
+\]
+
+Where $D$ is the underlying distribution, $S(x) = \{x' \in \RR^n | \norm{x - x'}_p \leq \epsilon \}$ is the perturbation region. Intuitively, we're minimizing the empirical risk of the worst case behavior in the perturbation region.
+
+In practice, this is done as follows:
 
 \begin{algorithm}
 \caption{Adversarial training using PGD}
 \begin{algorithmic}[1]
 \State Select minibatch $B$ from dataset $D$.
 \For{$(x, y) \in B$}
-	\State Find $x_{max} = \argmax_{x' \in S(x)} L(\theta, x', y)$ (e.g. via PGD)
+	\State Find $x_{max} = \argmax_{x' \in S(x)}{L(\theta, x', y)}$ (e.g. using PGD)
 \EndFor
-\State Update parameters: $\theta \gets \theta - \frac{1}{|B_{max}|}\sum_{(x_{max}, y) \in B_{max}} \nabla_{\theta} L(\theta, x_{max}, y)$
+\State Solve outer optimization problem: $\theta \gets $\theta - \frac{1}{|B_{max}|}\sum_{(x_{max}, y) \in B_{max}} \nabla_{\theta} L(\theta, x_{max}, y)$
 \end{algorithmic}
 \end{algorithm}
 
-Larger models are generally more robust to adversarial training. On small models, adversarial training can hurt clean accuracy. In practice, PGD-based training yields better robustness than FGSM-based training.
+Model capacity is important - larger networks are more defendable, whereas training smaller networks with PGD negatively affects accuracy. On large networks, accuracy on test set may still suffer due to adversarial pretraining. Usually, training with adversarial examples from PGD attacks performs better than training with adversarial examples using FGSM.
 
 \newpage
 \subsection{Lecture 3: }
