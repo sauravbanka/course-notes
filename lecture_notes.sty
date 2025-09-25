@@ -15,6 +15,7 @@
 \RequirePackage[shortlabels]{enumitem}
 \RequirePackage{caption}
 \RequirePackage{sectsty}
+\RequirePackage{xparse}
 
 %%%%%%%%% If/Else Toggles %%%%%%%%%
 \newif\ifnotesheader\notesheaderfalse      % default: no header
@@ -187,6 +188,12 @@
 \newcommand{\limsupm}{\operatorname*{lim\,sup}}
 \newcommand{\liminfm}{\operatorname*{lim\,inf}}
 \newcommand{\loss}{\operatorname*{loss}}
+\NewDocumentCommand{\optprob}{mmm o}{%
+  \begin{aligned}
+    \text{#1} & = #2 \; #3
+    \IfValueT{#4}{ \\[-0.3em] \text{s.t.} & \begin{aligned}[t] #4 \end{aligned} }
+  \end{aligned}
+}
 
 % Vectors and matrices
 \newcommand{\vx}{\bm{x}}
